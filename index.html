@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solar Cell Cleaning Systems</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#ffffff; --text:#0f172a; --muted:#64748b; --ring:#e5e7eb;
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 6px 24px rgba(15,23,42,.06);
+    --green:#22c55e; --green-600:#16a34a; --red:#ef4444; --red-600:#dc2626;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans Thai", sans-serif;
+    display:flex;justify-content:center;align-items:flex-start;padding:20px;
+  }
+  .shell{width:min(920px,96vw)}
+
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  h1{font-size:20px;margin:0;font-weight:800}
+  .status-badge{padding:8px 14px;border-radius:999px;border:1px solid var(--ring);background:#f8fafc;box-shadow:var(--shadow);min-width:110px;text-align:center;font-weight:700}
+  .status-badge.offline{background:#f3f4f6;color:#334155}
+  .status-badge.online{background:#e8f8ee;color:var(--green-600);border-color:#bfe8ce}
+  .status-badge.emergency{background:#fee2e2;color:var(--red-600);border-color:#fecaca}
+
+  .tabs-wrap{background:#fff;border:1px solid var(--ring);border-radius:999px;padding:6px;display:inline-flex;gap:10px;box-shadow:var(--shadow);margin-bottom:14px}
+  .tab{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid transparent;cursor:pointer;color:#334155;font-weight:800;background:transparent;transition:.15s}
+  .tab svg{width:18px;height:18px;opacity:.9}
+  .tab.active{background:#eef2ff;border-color:#dbe3ff;box-shadow:var(--shadow);color:#111}
+  .mini-dot{width:8px;height:8px;border-radius:50%;background:#9ca3af}
+  .mini-dot.green{background:var(--green)} .mini-dot.red{background:var(--red)}
+
+  .panel{display:none} .panel.active{display:block}
+
+  .battery-card{background:var(--surface);border:1px solid var(--ring);border-radius:20px;padding:18px;margin:0 0 14px 0;box-shadow:var(--shadow)}
+  .battery-title{font-size:24px;font-weight:800;margin:0 0 6px 0}
+  .battery-sub{font-size:12px;color:var(--muted);margin:0 0 10px 0}
+  .bar{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;border:1px solid #d1d5db}
+  .fill{height:100%;width:0;background:var(--green);transition:width .25s ease}
+
+  .row{background:#fff;border:1px solid var(--ring);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);margin-top:12px}
+  .row b{font-size:15px} .muted{color:var(--muted);font-size:12px;margin-top:2px}
+
+  .switch{--w:46px;--h:24px;appearance:none;width:var(--w);height:var(--h);background:#e5e7eb;border-radius:999px;position:relative;border:1px solid #d1d5db;cursor:pointer}
+  .switch:after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .2s ease}
+  .switch:checked{background:#bbf7d0;border-color:#a7f3d0}
+  .switch:checked:after{transform:translateX(22px)}
+  .switch:disabled{opacity:.5;cursor:not-allowed}
+  .switch--emg:checked{background:#fecaca;border-color:#fca5a5}
+
+  .card{background:#fff;border:1px solid var(--ring);border-radius:20px;box-shadow:var(--shadow);padding:14px 16px}
+  .graph-card{padding:12px 14px;margin-bottom:14px}
+  .graph-title{font-weight:700;margin:0 0 6px;font-size:13px}
+  .graph-box{padding:12px;border:1px solid var(--ring);border-radius:14px;background:#fff;overflow:hidden}
+  .graph-box canvas{display:block;width:100%;height:240px}
+
+  .device{display:grid;grid-template-columns:100px 1fr;gap:16px;align-items:center}
+  .device__img{width:100px;height:78px;border:2px dashed #94a3b8;border-radius:12px;background:#e2e8f0;display:flex;align-items:center;justify-content:center}
+  .device__img svg{width:92%;height:auto}
+  .device__title{font-weight:800;font-size:18px}
+  .device__sub{font-size:12px;color:var(--muted)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .col-stack{display:flex;flex-direction:column;gap:14px}
+  .mb14{margin-bottom:14px} .mb8{margin-bottom:8px}
+  @media (max-width:760px){.grid-2{grid-template-columns:1fr}}
+
+  .state-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid #cbd5e1;background:#e5e7eb;display:inline-block}
+  .state-dot.green{background:#22c55e;border-color:#16a34a}
+
+  .pill{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--ring);border-radius:18px;padding:12px 16px;box-shadow:var(--shadow)}
+  .pill__icon{width:46px;height:46px;border-radius:50%;background:#f8fafc;border:1px solid var(--ring);display:flex;align-items:center;justify-content:center}
+  .pill__icon svg{width:26px;height:26px}
+  .pill__body{display:flex;flex-direction:column;gap:2px}
+  .pill__row{display:flex;align-items:center;gap:8px}
+  .pill__title{font-weight:700} .pill__sub{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>Solar Cell Cleaning Systems</h1>
+      <div class="status-badge offline" id="badge">Offline</div>
+    </header>
+
+    <div class="tabs-wrap" role="tablist" aria-label="Main tabs">
+      <div id="tabSystem" class="tab active" role="tab" aria-selected="true" aria-controls="panelSystem" tabindex="0">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="3" y="14" width="18" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="17" cy="7" r="1" fill="currentColor"/><circle cx="17" cy="17" r="1" fill="currentColor"/>
+        </svg>
+        <span>system</span>
+      </div>
+
+      <div id="tabRobot" class="tab" role="tab" aria-selected="false" aria-controls="panelRobot" tabindex="-1">
+        <span class="mini-dot" id="dotRobot"></span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 3h8v3H8zM5 10a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-5Z" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="10" cy="12" r="1" fill="currentColor"/><circle cx="14" cy="12" r="1" fill="currentColor"/>
+        </svg>
+        <span>Robot</span>
+      </div>
+
+      <div id="tabStation" class="tab" role="tab" aria-selected="false" aria-controls="panelStation" tabindex="-1">
+        <span class="mini-dot" id="dotStation"></span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M8 3h8v3H8zM5 10a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-5Z" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="10" cy="12" r="1" fill="currentColor"/><circle cx="14" cy="12" r="1" fill="currentColor"/>
+        </svg>
+        <span>Station</span>
+      </div>
+    </div>
+
+    <!-- SYSTEM -->
+    <section id="panelSystem" class="panel active" role="tabpanel" tabindex="0">
+      <div class="battery-card">
+        <h2 class="battery-title">Robot</h2>
+        <p class="battery-sub">battery percentage : <span>60%</span></p>
+        <div class="bar"><div class="fill" style="width:60%"></div></div>
+      </div>
+      <div class="battery-card">
+        <h2 class="battery-title" style="text-transform:lowercase">station</h2>
+        <p class="battery-sub">battery percentage : <span>80%</span></p>
+        <div class="bar"><div class="fill" style="width:80%"></div></div>
+      </div>
+      <div class="row">
+        <div><b>Wash</b><div class="muted" id="washText">OFF</div></div>
+        <input id="washSwitch" type="checkbox" class="switch" />
+      </div>
+      <div class="row">
+        <div><b>Emergency</b><div class="muted" id="emgText">OFF</div></div>
+        <input id="emgSwitch" type="checkbox" class="switch switch--emg" />
+      </div>
+    </section>
+
+    <!-- ROBOT -->
+    <section id="panelRobot" class="panel" role="tabpanel" tabindex="0">
+      <div class="battery-card">
+        <h2 class="battery-title">Robot</h2>
+        <p class="battery-sub">battery percentage : <span>60%</span></p>
+        <div class="bar"><div class="fill" style="width:60%"></div></div>
+      </div>
+
+      <div class="card graph-card">
+        <p class="graph-title">กระแสไฟจากแหล่งจ่าย</p>
+        <div class="graph-box"><canvas id="graphRobot"></canvas></div>
+      </div>
+
+      <!-- Microcontroller card -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="device">
+          <div class="device__img" aria-label="Microcontroller board">
+            <svg viewBox="0 0 220 150" aria-hidden="true">
+              <rect x="16" y="14" rx="10" ry="10" width="188" height="122" fill="#cfe2ff" stroke="#94a3b8" stroke-width="2"/>
+              <rect x="84" y="50" width="52" height="46" rx="6" fill="#64748b"/>
+            </svg>
+          </div>
+          <div>
+            <div class="device__title">Microcontroller board</div>
+            <div class="device__sub">ESP32</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="rbMicroDot" class="state-dot"></span><span id="rbMicroTxt">Off</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:8px">
+        <div class="pill">
+          <div class="pill__icon">
+            <svg viewBox="0 0 48 48">
+              <rect x="8" y="20" width="28" height="16" rx="3" fill="#e2e8f0" stroke="#94a3b8"/>
+              <line x1="22" y1="18" x2="38" y2="10" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="38" cy="10" r="4" fill="#94a3b8"/>
+            </svg>
+          </div>
+          <div class="pill__body">
+            <div class="pill__row">
+              <span id="rbFrontDot" class="state-dot"></span>
+              <span class="pill__title">Front Limit Switch</span>
+            </div>
+            <span id="rbFrontTxt" class="pill__sub">Off</span>
+          </div>
+        </div>
+
+        <div class="pill">
+          <div class="pill__icon">
+            <svg viewBox="0 0 48 48">
+              <rect x="8" y="20" width="28" height="16" rx="3" fill="#e2e8f0" stroke="#94a3b8"/>
+              <line x1="22" y1="18" x2="38" y2="10" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="38" cy="10" r="4" fill="#94a3b8"/>
+            </svg>
+          </div>
+          <div class="pill__body">
+            <div class="pill__row">
+              <span id="rbRearDot" class="state-dot"></span>
+              <span class="pill__title">Rear Limit Switch</span>
+            </div>
+            <span id="rbRearTxt" class="pill__sub">Off</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATION -->
+    <section id="panelStation" class="panel" role="tabpanel" tabindex="0">
+      <div class="battery-card">
+        <h2 class="battery-title">Station</h2>
+        <p class="battery-sub">battery percentage : <span>80%</span></p>
+        <div class="bar"><div class="fill" style="width:80%"></div></div>
+      </div>
+
+      <div class="card graph-card">
+        <p class="graph-title">กระแสไฟจากแหล่งจ่าย</p>
+        <div class="graph-box"><canvas id="graphStation"></canvas></div>
+      </div>
+
+      <!-- แถวที่ 1 : ซ้าย Microcontroller ใต้กราฟ -->
+      <div class="grid-2 mb14">
+        <div class="card">
+          <div class="device">
+            <div class="device__img" aria-label="Microcontroller board">
+              <svg viewBox="0 0 220 150" aria-hidden="true">
+                <rect x="16" y="14" rx="10" ry="10" width="188" height="122" fill="#cfe2ff" stroke="#94a3b8" stroke-width="2"/>
+                <rect x="84" y="50" width="52" height="46" rx="6" fill="#64748b"/>
+              </svg>
+            </div>
+            <div>
+              <div class="device__title">Microcontroller board</div>
+              <div class="device__sub">ESP32</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="state-dot"></span><span>Off</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- แถวที่ 2 : ซ้าย Front, ขวา Rear -->
+      <div class="grid-2 mb14">
+        <div class="pill">
+          <div class="pill__icon">
+            <svg viewBox="0 0 48 48">
+              <rect x="8" y="20" width="28" height="16" rx="3" fill="#e2e8f0" stroke="#94a3b8"/>
+              <line x1="22" y1="18" x2="38" y2="10" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="38" cy="10" r="4" fill="#94a3b8"/>
+            </svg>
+          </div>
+          <div class="pill__body">
+            <div class="pill__row"><span class="state-dot"></span><span class="pill__title">Front Limit Switch</span></div>
+            <span class="pill__sub">Off</span>
+          </div>
+        </div>
+
+        <div class="pill">
+          <div class="pill__icon">
+            <svg viewBox="0 0 48 48">
+              <rect x="8" y="20" width="28" height="16" rx="3" fill="#e2e8f0" stroke="#94a3b8"/>
+              <line x1="22" y1="18" x2="38" y2="10" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+              <circle cx="38" cy="10" r="4" fill="#94a3b8"/>
+            </svg>
+          </div>
+          <div class="pill__body">
+            <div class="pill__row"><span class="state-dot"></span><span class="pill__title">Rear Limit Switch</span></div>
+            <span class="pill__sub">Off</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- แถวที่ 3 : ขวา Top/Bottom Sensor ใต้ Rear -->
+      <div class="grid-2 mb8">
+        <div></div>
+        <div class="col-stack">
+          <div class="pill">
+            <div class="pill__icon">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="10" fill="#e2e8f0" stroke="#94a3b8"/>
+                <path d="M14 34c6-6 14-6 20 0" stroke="#94a3b8" stroke-width="2" fill="none"/>
+              </svg>
+            </div>
+            <div class="pill__body">
+              <div class="pill__row">
+                <span class="state-dot"></span>
+                <span class="pill__title">Top Sensor</span>
+              </div>
+              <span class="pill__sub">TOF400C VL53L1X</span>
+            </div>
+          </div>
+
+          <div class="pill">
+            <div class="pill__icon">
+              <svg viewBox="0 0 48 48">
+                <circle cx="24" cy="24" r="10" fill="#e2e8f0" stroke="#94a3b8"/>
+                <path d="M14 34c6-6 14-6 20 0" stroke="#94a3b8" stroke-width="2" fill="none"/>
+              </svg>
+            </div>
+            <div class="pill__body">
+              <div class="pill__row">
+                <span class="state-dot"></span>
+                <span class="pill__title">Bottom Sensor</span>
+              </div>
+              <span class="pill__sub">TOF400C VL53L1X</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  /* ---------- badge & helpers ---------- */
+  const badge=document.getElementById('badge');
+  const setBadge=(mode)=>{
+    badge.className='status-badge '+(mode==='online'?'online':mode==='emergency'?'emergency':'offline');
+    badge.textContent=(mode==='online')?'Online':(mode==='emergency')?'EMERGENCY':'Offline';
+  };
+  const dotRobot=document.getElementById('dotRobot');
+  const dotStation=document.getElementById('dotStation');
+  const setMiniDot=(el,color)=>{el.className='mini-dot'+(color?(' '+color):'');};
+
+  /* ---------- Robot page indicators ---------- */
+  const rbMicroDot=document.getElementById('rbMicroDot');
+  const rbMicroTxt=document.getElementById('rbMicroTxt');
+  const rbRearDot=document.getElementById('rbRearDot');
+  const rbRearTxt=document.getElementById('rbRearTxt');
+  const rbFrontDot=document.getElementById('rbFrontDot');
+  const rbFrontTxt=document.getElementById('rbFrontTxt');
+
+  const setInd=(dot,txt,on)=>{ dot.classList.toggle('green', !!on); txt.textContent = on?'On':'Off'; };
+  const resetRobotIndicators=()=>{ setInd(rbMicroDot,rbMicroTxt,false); setInd(rbRearDot,rbRearTxt,false); setInd(rbFrontDot,rbFrontTxt,false); };
+
+  /* ---------- Graph mapping ---------- */
+  const mapPts=[{p:20,v:10.0},{p:40,v:10.5},{p:60,v:11.0},{p:80,v:11.5},{p:100,v:12.0}];
+  function vFromPct(p){
+    p=Math.max(20,Math.min(100,p));
+    for(let i=0;i<mapPts.length-1;i++){ const a=mapPts[i], b=mapPts[i+1];
+      if(p>=a.p && p<=b.p){ const t=(p-a.p)/(b.p-a.p); return a.v+t*(b.v-a.v); }
+    } return 12.0;
+  }
+  function drawGraph(canvas, pct){
+    if(!canvas) return;
+    const dpr=window.devicePixelRatio||1, w=canvas.clientWidth, h=canvas.clientHeight;
+    canvas.width=Math.floor(w*dpr); canvas.height=Math.floor(h*dpr);
+    const ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const left=50,right=12,top=10,bottom=34; const iw=w-left-right, ih=h-top-bottom;
+    const xMin=0,xMax=100,yMin=10,yMax=12;
+    const x2px=x=>left+(x-xMin)/(xMax-xMin)*iw, y2px=y=>top+(yMax-y)/(yMax-yMin)*ih;
+
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+    for(let xv=0;xv<=100;xv+=20){ const x=x2px(xv); ctx.beginPath();ctx.moveTo(x,y2px(yMin));ctx.lineTo(x,y2px(yMax));ctx.stroke(); }
+    for(let yv=10; yv<=12.0001; yv+=0.5){ const y=y2px(yv); ctx.beginPath();ctx.moveTo(x2px(xMin),y);ctx.lineTo(x2px(xMax),y);ctx.stroke(); }
+
+    ctx.strokeStyle='#0f172a'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(x2px(xMin),y2px(yMin)); ctx.lineTo(x2px(xMax),y2px(yMin)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2px(xMin),y2px(yMin)); ctx.lineTo(x2px(xMin),y2px(yMax)); ctx.stroke();
+
+    ctx.fillStyle='#111'; ctx.font='12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    for(let yv=10; yv<=12.0001; yv+=0.5){ const y=y2px(yv); ctx.fillText(yv.toFixed(1),8,y+4); }
+    for(let xv=0;xv<=100;xv+=20){ const x=x2px(xv); ctx.fillText(String(xv), x-6, y2px(yMin)+16); }
+    ctx.fillText('Voltage (V)', 8, y2px(11.95));
+    ctx.textAlign='center'; ctx.fillText('Battery Percentage', x2px(50), y2px(yMin)+28); ctx.textAlign='start';
+
+    const volt=vFromPct(pct), barW=16, barX=x2px(pct), y0=y2px(yMin), yTop=y2px(volt);
+    ctx.save(); ctx.beginPath(); ctx.rect(x2px(xMin)+0.5, y2px(yMax)+0.5, iw-1, ih-1); ctx.clip();
+    ctx.fillStyle='#22c55e'; ctx.strokeStyle='#166534';
+    ctx.fillRect(barX-barW/2, yTop, barW, y0-yTop);
+    ctx.strokeRect(barX-barW/2, yTop, barW, y0-yTop);
+    ctx.restore();
+    ctx.fillText(`${volt.toFixed(2)} V`, Math.max(6, Math.min(w-46, barX-18)), Math.max(top+12, yTop-6));
+  }
+  const graphRobot=document.getElementById('graphRobot');
+  const graphStation=document.getElementById('graphStation');
+  const redrawGraphs=()=>{ drawGraph(graphRobot,60); drawGraph(graphStation,80); };
+  window.addEventListener('resize',redrawGraphs); redrawGraphs();
+
+  /* ---------- Tabs ---------- */
+  const tabs={tabSystem:'panelSystem',tabRobot:'panelRobot',tabStation:'panelStation'};
+  Object.keys(tabs).forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('click',()=>{
+      for(const t in tabs){
+        const tab=document.getElementById(t), panel=document.getElementById(tabs[t]);
+        tab.classList.remove('active'); panel.classList.remove('active'); tab.setAttribute('aria-selected','false');
+      }
+      el.classList.add('active'); document.getElementById(tabs[id]).classList.add('active'); el.setAttribute('aria-selected','true');
+      if(id==='tabRobot') drawGraph(graphRobot,60);
+      if(id==='tabStation') drawGraph(graphStation,80);
+    });
+  });
+
+  /* ---------- Wash/Emergency & pulse loop ---------- */
+  const washSwitch=document.getElementById('washSwitch');
+  const emgSwitch=document.getElementById('emgSwitch');
+  const washText=document.getElementById('washText');
+  const emgText=document.getElementById('emgText');
+
+  const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+  let pulseToken=0;
+
+  // เมื่อจุด ROBOT เขียว ให้เรียง Micro(ตลอดช่วง), Rear(2s), Front(2s)
+  async function robotGreenPhase(durationMs, myToken){
+    setInd(rbMicroDot, rbMicroTxt, true);   // Micro ติดตลอดช่วง
+    setInd(rbRearDot,  rbRearTxt,  true);   // Rear 2 วิ
+    let t=durationMs;
+
+    const rearOn = Math.min(2000, t);
+    await sleep(rearOn);
+    if(myToken!==pulseToken) return;
+    setInd(rbRearDot, rbRearTxt, false);
+    t -= rearOn;
+
+    if(t>0){
+      const frontOn = Math.min(2000, t);
+      setInd(rbFrontDot, rbFrontTxt, true);
+      await sleep(frontOn);
+      if(myToken!==pulseToken) return;
+      setInd(rbFrontDot, rbFrontTxt, false);
+      t -= frontOn;
+    }
+
+    if(t>0){ await sleep(t); if(myToken!==pulseToken) return; }
+
+    // จบช่วง → ดับทั้งหมดในหน้า Robot
+    setInd(rbMicroDot, rbMicroTxt, false);
+    setInd(rbRearDot,  rbRearTxt,  false);
+    setInd(rbFrontDot, rbFrontTxt, false);
+  }
+
+  async function runPulseLoop(){
+    const myToken=++pulseToken;
+    while(myToken===pulseToken && washSwitch.checked && !emgSwitch.checked){
+      // Robot 5s
+      setMiniDot(dotRobot,'green'); setMiniDot(dotStation,'');
+      robotGreenPhase(5000,myToken);
+      await sleep(5000); if(myToken!==pulseToken||!washSwitch.checked||emgSwitch.checked) break;
+      setMiniDot(dotRobot,''); resetRobotIndicators();
+
+      // Station 3s
+      setMiniDot(dotStation,'green');
+      await sleep(3000); if(myToken!==pulseToken||!washSwitch.checked||emgSwitch.checked) break;
+      setMiniDot(dotStation,'');
+
+      // Robot 5s
+      setMiniDot(dotRobot,'green'); robotGreenPhase(5000,myToken);
+      await sleep(5000); if(myToken!==pulseToken||!washSwitch.checked||emgSwitch.checked) break;
+      setMiniDot(dotRobot,''); resetRobotIndicators();
+
+      // Robot 3s
+      setMiniDot(dotRobot,'green'); robotGreenPhase(3000,myToken);
+      await sleep(3000); if(myToken!==pulseToken||!washSwitch.checked||emgSwitch.checked) break;
+      setMiniDot(dotRobot,''); resetRobotIndicators();
+    }
+  }
+
+  function stopPulse(){
+    pulseToken++;                        // ยกเลิกลูปเดิม
+    setMiniDot(dotRobot,''); setMiniDot(dotStation,'');
+    resetRobotIndicators();
+  }
+
+  function renderSystem(){
+    const isWash=washSwitch.checked, isEmg=emgSwitch.checked;
+
+    // กด EMG ระหว่าง Wash ON → ปิด Wash ทันที
+    if(isEmg && isWash){ washSwitch.checked=false; }
+
+    washText.textContent = washSwitch.checked ? 'ON'  : 'OFF';
+    emgText.textContent  = emgSwitch.checked ? 'EMG' : 'OFF';
+
+    if(isEmg){
+      setBadge('emergency'); stopPulse(); washSwitch.disabled=true;
+      setMiniDot(dotRobot,'red'); setMiniDot(dotStation,'red'); return;
+    }else{ washSwitch.disabled=false; }
+
+    if(washSwitch.checked){ setBadge('online'); stopPulse(); runPulseLoop(); }
+    else{ setBadge('offline'); stopPulse(); }
+  }
+
+  washSwitch.addEventListener('change',renderSystem);
+  emgSwitch.addEventListener('change',renderSystem);
+  renderSystem();
+</script>
+</body>
+</html>
